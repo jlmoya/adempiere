@@ -6,6 +6,6 @@ ADempiere Business Suite ERP/CRM/MFG/SCM/POS done the Bazaar way in an open and 
 - For download and debug the source see: http://adempiere.net/web/guest/sourcecode
 - To see a demo go to: http://adempiere.net/web/guest/demo
 - You can see the business process on: http://adempiere.net/web/guest/business-process
-- If you need report a bug see: https://github.com/adempiere/adempiere/issues
+- If you need to report a bug go to: https://github.com/adempiere/adempiere/issues
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/adempiere/adempiere?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
