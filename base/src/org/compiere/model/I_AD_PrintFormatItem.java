@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for AD_PrintFormatItem
  *  @author Adempiere (generated) 
- *  @version Release 3.9.1
+ *  @version Release 3.9.2
  */
 public interface I_AD_PrintFormatItem 
 {
@@ -414,6 +414,19 @@ public interface I_AD_PrintFormatItem
 	  * If selected, only one line is printed
 	  */
 	public boolean isHeightOneLine();
+
+    /** Column name IsHideGrandTotal */
+    public static final String COLUMNNAME_IsHideGrandTotal = "IsHideGrandTotal";
+
+	/** Set Hide Grand Total.
+	  * Hide Grand Total of Calculation
+	  */
+	public void setIsHideGrandTotal (boolean IsHideGrandTotal);
+
+	/** Get Hide Grand Total.
+	  * Hide Grand Total of Calculation
+	  */
+	public boolean isHideGrandTotal();
 
     /** Column name IsImageField */
     public static final String COLUMNNAME_IsImageField = "IsImageField";

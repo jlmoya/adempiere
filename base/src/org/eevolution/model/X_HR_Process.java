@@ -26,14 +26,14 @@ import org.compiere.util.Env;
 
 /** Generated Model for HR_Process
  *  @author Adempiere (generated) 
- *  @version Release 3.9.1 - $Id$ */
+ *  @version Release 3.9.2 - $Id$ */
 public class X_HR_Process extends PO implements I_HR_Process, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20181220L;
+	private static final long serialVersionUID = 20191120L;
 
     /** Standard Constructor */
     public X_HR_Process (Properties ctx, int HR_Process_ID, String trxName)
@@ -139,6 +139,62 @@ public class X_HR_Process extends PO implements I_HR_Process, I_Persistent
 		return ii.intValue();
 	}
 
+	public org.compiere.model.I_C_ConversionType getC_ConversionType() throws RuntimeException
+    {
+		return (org.compiere.model.I_C_ConversionType)MTable.get(getCtx(), org.compiere.model.I_C_ConversionType.Table_Name)
+			.getPO(getC_ConversionType_ID(), get_TrxName());	}
+
+	/** Set Currency Type.
+		@param C_ConversionType_ID 
+		Currency Conversion Rate Type
+	  */
+	public void setC_ConversionType_ID (int C_ConversionType_ID)
+	{
+		if (C_ConversionType_ID < 1) 
+			set_Value (COLUMNNAME_C_ConversionType_ID, null);
+		else 
+			set_Value (COLUMNNAME_C_ConversionType_ID, Integer.valueOf(C_ConversionType_ID));
+	}
+
+	/** Get Currency Type.
+		@return Currency Conversion Rate Type
+	  */
+	public int getC_ConversionType_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_C_ConversionType_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
+	public org.compiere.model.I_C_Currency getC_Currency() throws RuntimeException
+    {
+		return (org.compiere.model.I_C_Currency)MTable.get(getCtx(), org.compiere.model.I_C_Currency.Table_Name)
+			.getPO(getC_Currency_ID(), get_TrxName());	}
+
+	/** Set Currency.
+		@param C_Currency_ID 
+		The Currency for this record
+	  */
+	public void setC_Currency_ID (int C_Currency_ID)
+	{
+		if (C_Currency_ID < 1) 
+			set_Value (COLUMNNAME_C_Currency_ID, null);
+		else 
+			set_Value (COLUMNNAME_C_Currency_ID, Integer.valueOf(C_Currency_ID));
+	}
+
+	/** Get Currency.
+		@return The Currency for this record
+	  */
+	public int getC_Currency_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_C_Currency_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
 	public org.compiere.model.I_C_DocType getC_DocTypeTarget() throws RuntimeException
     {
 		return (org.compiere.model.I_C_DocType)MTable.get(getCtx(), org.compiere.model.I_C_DocType.Table_Name)
@@ -201,7 +257,7 @@ public class X_HR_Process extends PO implements I_HR_Process, I_Persistent
 	  */
 	public void setDateAcct (Timestamp DateAcct)
 	{
-		set_ValueNoCheck (COLUMNNAME_DateAcct, DateAcct);
+		set_Value (COLUMNNAME_DateAcct, DateAcct);
 	}
 
 	/** Get Account Date.
@@ -406,9 +462,9 @@ public class X_HR_Process extends PO implements I_HR_Process, I_Persistent
 	public void setHR_Payroll_ID (int HR_Payroll_ID)
 	{
 		if (HR_Payroll_ID < 1) 
-			set_ValueNoCheck (COLUMNNAME_HR_Payroll_ID, null);
+			set_Value (COLUMNNAME_HR_Payroll_ID, null);
 		else 
-			set_ValueNoCheck (COLUMNNAME_HR_Payroll_ID, Integer.valueOf(HR_Payroll_ID));
+			set_Value (COLUMNNAME_HR_Payroll_ID, Integer.valueOf(HR_Payroll_ID));
 	}
 
 	/** Get Payroll.
@@ -431,9 +487,9 @@ public class X_HR_Process extends PO implements I_HR_Process, I_Persistent
 	public void setHR_Period_ID (int HR_Period_ID)
 	{
 		if (HR_Period_ID < 1) 
-			set_ValueNoCheck (COLUMNNAME_HR_Period_ID, null);
+			set_Value (COLUMNNAME_HR_Period_ID, null);
 		else 
-			set_ValueNoCheck (COLUMNNAME_HR_Period_ID, Integer.valueOf(HR_Period_ID));
+			set_Value (COLUMNNAME_HR_Period_ID, Integer.valueOf(HR_Period_ID));
 	}
 
 	/** Get Payroll Period.

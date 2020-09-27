@@ -63,6 +63,7 @@ import org.compiere.util.Msg;
 import org.compiere.util.SecureEngine;
 import org.compiere.util.Trace;
 import org.compiere.util.Trx;
+import org.compiere.util.Util;
 import org.compiere.util.ValueNamePair;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -107,6 +108,9 @@ import org.w3c.dom.Element;
  * 			@see FR [ 673 ] Model Migration don't load current value for Multi-Key records</a>
  * 			<a href="https://github.com/adempiere/adempiere/issues/922">
  * 			@see FR [ 922 ] Is Allow Copy in model</a>
+ * @author Carlos Parada, cparada@erpya.com, ERPCyA http://www.erpya.com
+ *  		<a href="https://github.com/adempiere/adempiere/issues/729">
+ *			@see FR [ 729 ] Add Support to Parent Column And Search Column for Tree </a>
  */
 public abstract class PO
 	implements Serializable, Comparator, Evaluatee, Cloneable
@@ -327,7 +331,7 @@ public abstract class PO
 	public String toString()
 	{
 		StringBuffer sb = new StringBuffer("PO[")
-			.append(get_WhereClause(true)).append("]");
+			.append(get_WhereClause(true)).append(", UUID=").append(get_UUID()).append("]");
 		return sb.toString();
 	}	//  toString
 
@@ -433,6 +437,14 @@ public abstract class PO
 			return ((Integer)oo).intValue();
 		return 0;
 	}   //  getID
+	
+	/**
+	 * Get UUID
+	 * @return
+	 */
+	public String get_UUID() {
+		return get_ValueAsString(I_AD_Element.COLUMNNAME_UUID);
+	}
 
 	/**
 	 *  Return Deleted Single Key Record ID
@@ -627,7 +639,9 @@ public abstract class PO
 			log.log(Level.WARNING, "Index invalid - " + index);
 			return false;
 		}
-		if (m_newValues[index] == null)
+		if (m_newValues[index] == null
+				|| (m_newValues[index].equals(Null.NULL)
+						&& m_oldValues[index] == null))
 			return false;
 		return !m_newValues[index].equals(m_oldValues[index]);
 	}   //  is_ValueChanged
@@ -1255,6 +1269,34 @@ public abstract class PO
 		return retValue;
 	}	//	get_DisplayValue
 
+	/**
+	 * Get Label value from po
+	 * @return
+	 */
+	public String getDisplayValue() {
+		StringBuffer identifier = new StringBuffer();
+		MTable table = MTable.get(getCtx(), get_Table_ID());
+		table.getColumnsAsList().stream()
+		.sorted(Comparator.comparing(MColumn::getSeqNo))
+		.filter(entry -> entry.isIdentifier() 
+				&& get_Value(entry.getColumnName()) != null
+				&& !Util.isEmpty(get_DisplayValue(entry.getColumnName(), true)))
+		.forEach(column -> {
+		//	Validate value
+			String displayColumn = get_DisplayValue(column.getColumnName(), true);
+			//	Add separator
+			if(identifier.length() > 0) {
+				identifier.append("_");
+			}
+			//	Add Value
+			identifier.append(displayColumn);				
+		});
+		//	Add default
+		if(identifier.length() == 0) {
+			identifier.append("<").append(get_ID()).append(">");
+		}
+		return identifier.toString();
+	}
 
 	/**
 	 * 	Copy old values of From to new values of To.
@@ -2312,6 +2354,8 @@ public abstract class PO
 				//	Insert Tree Node
 				if (success && newRecord)
 					insertTreeNode();
+				else if (success && !newRecord)
+					updateTreeNode();
 				//	End Yamel Senih
 			}
 			catch (Exception e)
@@ -2466,7 +2510,15 @@ public abstract class PO
 		boolean updated = false;
 		boolean updatedBy = false;
 		lobReset();
-
+		//	UUID
+		String columnName = I_AD_Element.COLUMNNAME_UUID;
+		if (p_info.getColumnIndex(columnName) != -1) {
+			String value = get_ValueAsString(columnName);
+			if (value == null || value.length() == 0) {
+				value = DB.getUUID(m_trxName);
+				set_ValueNoCheck(columnName, value);
+			}
+		}
 		//	Change Log
 		MSession session = MSession.get (p_ctx, false);
 		if (session == null)
@@ -2479,13 +2531,8 @@ public abstract class PO
 		int size = get_ColumnCount();
 		for (int i = 0; i < size; i++)
 		{
-			String columnName = p_info.getColumnName(i);
+			columnName = p_info.getColumnName(i);
 			Object value = m_newValues[i];
-			if (columnName.equals("UUID") && get_Value(columnName) == null)
-			{
-				value = generateUUID();
-			}
-
 			if (value == null
 				|| p_info.isVirtualColumn(i))
 				continue;
@@ -2523,21 +2570,23 @@ public abstract class PO
 			//	Update Document No
 			if (columnName.equals("DocumentNo"))
 			{
-				String strValue = (String)value;
-				if (strValue.startsWith("<") && strValue.endsWith(">"))
-				{
-					value = null;
-					int AD_Client_ID = getAD_Client_ID();
-					int index = p_info.getColumnIndex("C_DocTypeTarget_ID");
-					if (index == -1)
-						index = p_info.getColumnIndex("C_DocType_ID");
-					if (index != -1)		//	get based on Doc Type (might return null)
-						value = DB.getDocumentNo(get_ValueAsInt(index), m_trxName, false, this);
-					if (value == null)	//	not overwritten by DocType and not manually entered
-						value = DB.getDocumentNo(AD_Client_ID, p_info.getTableName(), m_trxName, this);
+				if(value instanceof String) {
+					String strValue = (String)value;
+					if (strValue.startsWith("<") && strValue.endsWith(">"))
+					{
+						value = null;
+						int AD_Client_ID = getAD_Client_ID();
+						int index = p_info.getColumnIndex("C_DocTypeTarget_ID");
+						if (index == -1)
+							index = p_info.getColumnIndex("C_DocType_ID");
+						if (index != -1)		//	get based on Doc Type (might return null)
+							value = DB.getDocumentNo(get_ValueAsInt(index), m_trxName, false, this);
+						if (value == null)	//	not overwritten by DocType and not manually entered
+							value = DB.getDocumentNo(AD_Client_ID, p_info.getTableName(), m_trxName, this);
+					}
+					else
+						log.warning("DocumentNo updated: " + m_oldValues[i] + " -> " + value);
 				}
-				else
-					log.warning("DocumentNo updated: " + m_oldValues[i] + " -> " + value);
 			}
 
 			if (changes)
@@ -2675,7 +2724,7 @@ public abstract class PO
 		//  Set ID for single key - Multi-Key values need explicitly be set previously
 		if (m_IDs.length == 1 && p_info.hasKeyColumn()
 			&& m_KeyColumns[0].endsWith("_ID")
-			&& !isDirectLoad )	//	AD_Language, EntityType
+			&& (!isDirectLoad || get_ID() <= 0))	//	AD_Language, EntityType
 		{
 			int no = saveNew_getID();
 			if (no <= 0)
@@ -2733,6 +2782,15 @@ public abstract class PO
 				set_ValueNoCheck(columnName, value);
 			}
 		}
+		//	UUID
+		columnName = I_AD_Element.COLUMNNAME_UUID;
+		if (p_info.getColumnIndex(columnName) != -1) {
+			String value = get_ValueAsString(columnName);
+			if (value == null || value.length() == 0) {
+				value = DB.getUUID(m_trxName);
+				set_ValueNoCheck(columnName, value);
+			}
+		}
 
 		lobReset();
 
@@ -2754,10 +2812,6 @@ public abstract class PO
 		for (int i = 0; i < size; i++)
 		{
 			Object value = get_Value(i);
-			if (p_info.getColumnName(i).equals("UUID") && value == null) {
-				value = generateUUID();
-			}
-
 			//	Don't insert NULL values (allows Database defaults)
 			if (value == null
 				|| p_info.isVirtualColumn(i))
@@ -3565,19 +3619,81 @@ public abstract class PO
 		//	Valid tree
 		if(m_AD_Tree_ID < 0)
 			return false;
+		
+		MTree tree = new MTree(getCtx(), m_AD_Tree_ID, get_TrxName());
+		
 		PO treeNode = MTable.get(getCtx(), treeTableName).getPO(0, get_TrxName());
 		treeNode.setAD_Client_ID(getAD_Client_ID());
 		treeNode.setAD_Org_ID(0);
 		treeNode.setIsActive(true);
 		treeNode.set_CustomColumn("AD_Tree_ID", m_AD_Tree_ID);
 		treeNode.set_CustomColumn("Node_ID", get_ID());
-		treeNode.set_CustomColumn("Parent_ID", 0);
+		//FR [ 729 ]
+		MColumn parentColumnIDforTree = null;
+		if (tree.getParent_Column_ID()>0) {
+			parentColumnIDforTree = MColumn.get(getCtx(), tree.getParent_Column_ID());
+			treeNode.set_CustomColumn("Parent_ID", get_ValueAsInt(parentColumnIDforTree.getColumnName()));
+		}
+		
+		if (treeNode.get_ValueAsInt("Parent_ID") == 0 
+				&& tree.getAD_ColumnSortOrder_ID() > 0) {
+			MColumn columnSortforTree = MColumn.get(getCtx(), tree.getAD_ColumnSortOrder_ID());
+			treeNode.set_CustomColumn("Parent_ID", getParentFromSort(columnSortforTree.getColumnName(), get_ValueAsString(columnSortforTree.getColumnName())));
+			if (parentColumnIDforTree!= null) {
+				if (treeNode.get_ValueAsInt("Parent_ID")!=get_ValueAsInt(parentColumnIDforTree.getColumnName())) {
+					set_Value(parentColumnIDforTree.getColumnName(), treeNode.get_ValueAsInt("Parent_ID"));
+					saveEx();
+				}
+			}
+			
+		}
+		else
+			treeNode.set_CustomColumn("Parent_ID", 0);
+		
 		treeNode.set_CustomColumn("SeqNo", 999);
 		treeNode.saveEx();
 		return true;
 		//	End Yamel Senih
 	}	//	insert_Tree
 
+	/**
+	 * FR [ 729 ]
+	 * Update Tree Node
+	 * @return
+	 */
+	private boolean updateTreeNode() {
+		int tableId = get_Table_ID();
+		if (!MTree.hasTree(tableId))
+			return false;
+		//	Get Node Table Name
+		String treeTableName = MTree.getNodeTableName(tableId);
+		int elementId = 0;
+		if (tableId == X_C_ElementValue.Table_ID) {
+			Integer ii = (Integer)get_Value("C_Element_ID");
+			if (ii != null)
+				elementId = ii.intValue();
+		}
+		int m_AD_Tree_ID = MTree.getDefaultTreeIdFromTableId(getAD_Client_ID(), tableId, elementId);
+		//	Valid tree
+		if(m_AD_Tree_ID < 0)
+			return false;
+		
+		MTree tree = new MTree(getCtx(), m_AD_Tree_ID, get_TrxName());
+		
+		PO treeNode = MTable.get(getCtx(), treeTableName).getPO("Node_ID = " + get_ID(), get_TrxName());
+		if (treeNode!=null) {
+			if (tree.getParent_Column_ID() > 0) {
+				MColumn columnIDforTree = MColumn.get(getCtx(), tree.getParent_Column_ID());
+				if (get_ValueAsInt(columnIDforTree.getColumnName())!= treeNode.get_ValueAsInt("Parent_ID")) {
+					treeNode.set_CustomColumn("Parent_ID", get_ValueAsInt(columnIDforTree.getColumnName()));
+					treeNode.saveEx();
+				}
+			}
+		}
+		
+		return true;
+	}
+	
 	/**
 	 * 	Delete ID Tree Nodes
 	 *	@return true if deleted
@@ -4227,13 +4343,33 @@ public abstract class PO
 		clone.m_isReplication = false;
 		return clone;
 	}
-
-	public String generateUUID() {
-		String uuid;
-		if (DB.isOracle())
-		 	uuid = DB.getSQLValueString(get_TrxName(), "SELECT getUUID() FROM DUAL");
-		else
-			uuid = DB.getSQLValueString(get_TrxName(), "SELECT getUUID()");
-		return uuid;
+	
+	/**
+	 * FR [ 729 ]
+	 * Get Tree Parent from Sort
+	 * @param sortColumn
+	 * @param sortValue
+	 * @return
+	 */
+	private int getParentFromSort(String sortColumn ,String sortValue) {
+		Integer parentID = 0 ;
+		if (sortValue!=null) {
+			List<PO> parentPO = new Query(getCtx(), get_TableName(), "IsSummary = 'Y' ", get_TrxName()).setOrderBy(sortColumn).list();
+			HashMap<String,Integer> currentValues = new HashMap<String,Integer>();
+			
+			for (PO po : parentPO) 
+				currentValues.put(po.get_ValueAsString(sortColumn), po.get_ID());
+			
+			while (sortValue.length()>0) {
+				sortValue = sortValue.substring(0, sortValue.length()-1);
+				parentID = currentValues.get(sortValue);
+				if (parentID==null)
+					parentID = 0;
+				else 
+					break;
+				
+			}
+		}
+		return parentID;
 	}
 }   //  PO

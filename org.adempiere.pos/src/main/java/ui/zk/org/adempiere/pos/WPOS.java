@@ -26,7 +26,6 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.pos.service.CPOS;
 import org.adempiere.pos.service.POSPanelInterface;
 import org.adempiere.pos.service.POSScalesPanelInterface;
-import org.adempiere.pos.test.SideServer;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.Button;
@@ -125,8 +124,6 @@ public class WPOS extends CPOS implements IFormController, EventListener, POSPan
 	public static final String 	FONTSTYLE 		= "font-weight:bold;";
 	/** Status bar info							*/
 	private String 							statusBarInfo = "";
-	/** Side Server for Printer 				*/
-	private static SideServer 				sideServer;
 	/**
 	 * 	Constructor - see init 
 	 */
@@ -170,8 +167,6 @@ public class WPOS extends CPOS implements IFormController, EventListener, POSPan
 			logoutTimer = new Timer(1000);
 			logoutTimer.start();
 		}
-		
-		startServerSocket();
 	}	//	init
 
 	/**************************************************************************
@@ -264,7 +259,7 @@ public class WPOS extends CPOS implements IFormController, EventListener, POSPan
 		Borderlayout mainLayout = new Borderlayout();
 		Grid layout = GridFactory.newGridLayout();
 		selection.appendChild(panel);
-		selection.setWidth("200px");
+		selection.setWidth("400px");
 		selection.setHeight("140px");
 		//	North
 		Panel centerPanel = new Panel();
@@ -285,8 +280,12 @@ public class WPOS extends CPOS implements IFormController, EventListener, POSPan
 		Row row = null;
 		rows = layout.newRows();
 		row = rows.newRow();
+		int i = 0;
 		for(MPOS pos : poss){
 			listTerminal.addItem(pos.getKeyNamePair());
+			if (pos.getSalesRep_ID()==salesRep_ID)
+				listTerminal.setSelectedIndex(i);
+			i++;
 		}
 		okButton.addActionListener(this);
 		cancelButton.addEventListener("onClick", this);
@@ -308,7 +307,7 @@ public class WPOS extends CPOS implements IFormController, EventListener, POSPan
 		confirm.getButton(ConfirmPanel.A_CANCEL).setHeight("55px");
 		
 		row.appendChild(confirm);
-		row.setHeight("55px");
+		row.setHeight("60px");
 		AEnv.showWindow(selection);
 			
 	}	//	setMPOS
@@ -683,23 +682,6 @@ public class WPOS extends CPOS implements IFormController, EventListener, POSPan
 	public void setQty(BigDecimal qty) {
 		quantityPanel.setQuantity(qty);
 		super.setQty(qty);
-	}
-	
-	/**
-	 * Start Server Socket
-	 * @return void
-	 */
-	private void startServerSocket(){
-		sideServer = new SideServer();
-		new Thread(sideServer).start();
-	}
-
-	/**
-	 * Print File
-	 * @param data
-	 */
-	public void printFile(byte[] data, int record_ID){
-		sideServer.printFile(data, record_ID);
 	}
 	
 	public void updateProductPlaceholder(String name)

@@ -23,14 +23,14 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Model for AD_PrintFormatItem
  *  @author Adempiere (generated) 
- *  @version Release 3.9.1 - $Id$ */
+ *  @version Release 3.9.2 - $Id$ */
 public class X_AD_PrintFormatItem extends PO implements I_AD_PrintFormatItem, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20181220L;
+	private static final long serialVersionUID = 20191120L;
 
     /** Standard Constructor */
     public X_AD_PrintFormatItem (Properties ctx, int AD_PrintFormatItem_ID, String trxName)
@@ -388,6 +388,8 @@ public class X_AD_PrintFormatItem extends PO implements I_AD_PrintFormatItem, I_
 	public static final String BARCODETYPE_Code39LinearWOChecksum = "c39";
 	/** EAN 13 = E13 */
 	public static final String BARCODETYPE_EAN13 = "E13";
+	/** Quick Response Code = QRC */
+	public static final String BARCODETYPE_QuickResponseCode = "QRC";
 	/** Set Barcode Type.
 		@param BarcodeType 
 		Type of barcode
@@ -738,6 +740,30 @@ public class X_AD_PrintFormatItem extends PO implements I_AD_PrintFormatItem, I_
 	public boolean isHeightOneLine () 
 	{
 		Object oo = get_Value(COLUMNNAME_IsHeightOneLine);
+		if (oo != null) 
+		{
+			 if (oo instanceof Boolean) 
+				 return ((Boolean)oo).booleanValue(); 
+			return "Y".equals(oo);
+		}
+		return false;
+	}
+
+	/** Set Hide Grand Total.
+		@param IsHideGrandTotal 
+		Hide Grand Total of Calculation
+	  */
+	public void setIsHideGrandTotal (boolean IsHideGrandTotal)
+	{
+		set_Value (COLUMNNAME_IsHideGrandTotal, Boolean.valueOf(IsHideGrandTotal));
+	}
+
+	/** Get Hide Grand Total.
+		@return Hide Grand Total of Calculation
+	  */
+	public boolean isHideGrandTotal () 
+	{
+		Object oo = get_Value(COLUMNNAME_IsHideGrandTotal);
 		if (oo != null) 
 		{
 			 if (oo instanceof Boolean) 
