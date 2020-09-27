@@ -4,7 +4,7 @@ ADempiere Business Suite ERP/CRM/MFG/SCM/POS done the Bazaar way in an open and 
 - The official Wiki is in: http://wiki.adempiere.net
 - The installation steps are in: http://wiki.adempiere.net/Installation_Steps
 - For download and debug the source see: http://adempiere.net/web/guest/sourcecode
-- For see a demo see: http://adempiere.net/web/guest/demo
+- To see a demo go to: http://adempiere.net/web/guest/demo
 - You can see the business process on: http://adempiere.net/web/guest/business-process
 - If you need report a bug see: https://github.com/adempiere/adempiere/issues
 
